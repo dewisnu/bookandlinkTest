@@ -5,10 +5,10 @@ import JobsTable from './components/JobsTable';
 import UploadForm from './components/UploadForm';
 import Pagination from './components/Pagination';
 import { Job } from './types';
-import { fetchJobs, fetchJobsByStatus,retryJob } from './api/jobs';
+import { fetchJobs, fetchJobsByStatus, retryJob } from './api/jobs';
 
 function App() {
-  const [jobs, setJobs] = useState<Job[]>([]); // Ensure jobs is always an array
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -20,38 +20,27 @@ function App() {
 
   // Initial load and periodic refresh
   useEffect(() => {
-    const loadJobs = async () => {
+    const loadJobs = async (isBackground = false) => {
       try {
-        setLoading(true);
+        if (!isBackground) setLoading(true);
         const data = statusFilter
             ? await fetchJobsByStatus(statusFilter)
             : await fetchJobs();
-        if (data === null) {
-          setJobs([]);
-          throw new Error('Failed to fetch jobs: data is undefined');
-        }
-        setJobs(data);
+        setJobs(data || []);
         setError(null);
       } catch (err) {
         setError('Failed to load jobs. Please try again.');
         console.error('Error loading jobs:', err);
       } finally {
-        setLoading(false);
+        if (!isBackground) setLoading(false);
       }
     };
 
-    loadJobs();
+    loadJobs(); // First load
 
-    // Set up polling
-    const interval = setInterval(loadJobs, 5000);
-
+    const interval = setInterval(() => loadJobs(true), 5000); // Background polling
     return () => clearInterval(interval);
   }, [statusFilter]);
-
-  // Get current page's jobs
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentJobs = (jobs || []).slice(indexOfFirstItem, indexOfLastItem); // safeguard for null or undefined
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -63,12 +52,7 @@ function App() {
       const data = statusFilter
           ? await fetchJobsByStatus(statusFilter)
           : await fetchJobs();
-
-      if (data === null) {
-        throw new Error('Failed to fetch jobs: data is undefined');
-      }
-
-      setJobs(data);
+      setJobs(data || []);
       setError(null);
     } catch (err) {
       setError('Failed to refresh jobs. Please try again.');
@@ -80,13 +64,18 @@ function App() {
 
   const handleUploadSuccess = async () => {
     await handleRefresh();
-    setCurrentPage(1); // Reset to first page after new upload
+    setCurrentPage(1);
   };
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setStatusFilter(e.target.value || null);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setCurrentPage(1);
   };
+
+  // Pagination calculations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentJobs = (jobs || []).slice(indexOfFirstItem, indexOfLastItem);
 
   return (
       <div className="min-h-screen bg-gray-50">
@@ -122,7 +111,7 @@ function App() {
                     className="flex items-center justify-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-100 transition-colors sm:w-auto w-full"
                     disabled={refreshing}
                 >
-                  <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+                  <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
                   Refresh
                 </button>
               </div>
@@ -139,12 +128,16 @@ function App() {
               {statusFilter ? ` with status "${statusFilter}"` : ''}
             </div>
 
-            <JobsTable
-                jobs={currentJobs}
-                loading={loading}
-                startIndex={(currentPage - 1) * itemsPerPage}
-                onRetry={retryJob}
-            />
+            {loading ? (
+                <div className="text-sm text-gray-500 py-6 text-center">Loading jobs...</div>
+            ) : (
+                <JobsTable
+                    jobs={currentJobs}
+                    loading={refreshing}
+                    startIndex={indexOfFirstItem}
+                    onRetry={retryJob}
+                />
+            )}
 
             <Pagination
                 currentPage={currentPage}
@@ -159,4 +152,5 @@ function App() {
 }
 
 export default App;
+
 
