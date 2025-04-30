@@ -33,7 +33,7 @@ func processJob(db *sql.DB, msg amqp.Delivery) {
 	}
 
 	// Download image from provider service
-	imageURL := "http://localhost:8080/images-uploaded/" + filename
+	imageURL := "http://publisher-service:8080/images-uploaded/" + filename
 	resp, err := http.Get(imageURL)
 	if err != nil || resp.StatusCode != 200 {
 		log.Printf("Error downloading image: %v", err)
