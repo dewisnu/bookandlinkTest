@@ -52,7 +52,6 @@ func main() {
 	router.GET("/images-uploaded/:filename", serveImageUploaded())
 	router.GET("/images-compressed/:filename", serveImageCompressed())
 	router.POST("/compressed", handleCompressedUpload())
-	router.Static("/compressed", "./compressed")
 
 	// Start the server
 	port := os.Getenv("PORT")

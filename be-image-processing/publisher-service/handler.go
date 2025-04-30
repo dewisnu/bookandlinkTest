@@ -267,7 +267,7 @@ func serveImageCompressed() gin.HandlerFunc {
 		}
 
 		// Path to compressed image
-		imagePath := filepath.Join("app/compressed", filename)
+		imagePath := filepath.Join("/app/compressed", filename)
 
 		// Check if file exists
 		if _, err := os.Stat(imagePath); os.IsNotExist(err) {

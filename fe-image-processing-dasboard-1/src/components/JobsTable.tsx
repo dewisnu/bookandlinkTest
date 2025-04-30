@@ -78,6 +78,12 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, loading, onRetry, startInde
               Filename
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Created At
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Original Size
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -85,12 +91,6 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, loading, onRetry, startInde
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Savings
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Status
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Created At
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
@@ -111,6 +111,12 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, loading, onRetry, startInde
                   {job.filename}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  {formatDate(job.created_at)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <StatusBadge status={job.status} />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                   {formatSize(job.original_size)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -119,16 +125,10 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, loading, onRetry, startInde
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                   {calculateSavings(job.original_size, job.compressed_size)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <StatusBadge status={job.status} />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {formatDate(job.created_at)}
-                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm" onClick={(e) => e.stopPropagation()}>
-                  {job.compressed_url && job.status === 'complete' ? (
+                  {job.compressed_file_name != null && job.status === 'completed' ? (
                     <a
-                      href={"http://localhost:8080/images-compressed/" + job.compressed_url}
+                      href={"http://localhost:8080/images-compressed/" + job.compressed_file_name}
                       className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
                       target="_blank"
                       rel="noopener noreferrer"

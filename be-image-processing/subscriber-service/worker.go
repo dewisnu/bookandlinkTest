@@ -83,7 +83,7 @@ func processJob(db *sql.DB, msg amqp.Delivery) {
 	io.Copy(part, fileData)
 	writer.Close()
 
-	uploadResp, err := http.Post("http://localhost:8080/compressed", writer.FormDataContentType(), body)
+	uploadResp, err := http.Post("http://publisher-service:8080/compressed", writer.FormDataContentType(), body)
 	if err != nil || uploadResp.StatusCode != 200 {
 		log.Printf("Error uploading compressed image: %v", err)
 		msg.Nack(false, false)
