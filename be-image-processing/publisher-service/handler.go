@@ -169,7 +169,7 @@ func getJobsByStatus(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		status := c.Param("status")
 		// Validate status
-		if status != "pending" && status != "processing" && status != "complete" && status != "failed" {
+		if status != "pending" && status != "processing" && status != "completed" && status != "failed" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status. Must be one of: pending, processing, complete, failed"})
 			return
 		}

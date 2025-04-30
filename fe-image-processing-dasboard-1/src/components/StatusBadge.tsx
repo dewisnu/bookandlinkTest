@@ -26,7 +26,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
         return {
           icon: <CheckCircle size={12} />,
           classes: 'bg-green-100 text-green-800',
-          label: 'Complete'
+          label: 'Completed'
         };
       case 'failed':
         return {

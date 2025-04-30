@@ -195,7 +195,7 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, loading, onRetry, startInde
                           <span className="text-red-600">{job.error_message}</span>
                         </div>
                       )}
-                      {job.status === 'complete' && job.original_size && job.compressed_size && (
+                      {job.status === 'completed' && job.original_size && job.compressed_size && (
                         <div className="mt-3">
                           <p className="text-xs text-gray-500 mb-2">Compression Result</p>
                           <div className="w-full bg-gray-200 rounded-full h-2.5">

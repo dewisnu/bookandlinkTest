@@ -27,6 +27,7 @@ function App() {
             ? await fetchJobsByStatus(statusFilter)
             : await fetchJobs();
         if (data === null) {
+          setJobs([]);
           throw new Error('Failed to fetch jobs: data is undefined');
         }
         setJobs(data);
@@ -111,7 +112,7 @@ function App() {
                     <option value="">All Status</option>
                     <option value="pending">Pending</option>
                     <option value="processing">Processing</option>
-                    <option value="complete">Complete</option>
+                    <option value="completed">Completed</option>
                     <option value="failed">Failed</option>
                   </select>
                 </div>
