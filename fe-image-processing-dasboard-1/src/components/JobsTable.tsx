@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, AlertCircle, RefreshCw } from 'lucide-react';
+import {AlertCircle, RefreshCw,Download } from 'lucide-react';
 import { Job } from '../types';
 import StatusBadge from './StatusBadge';
 
@@ -12,6 +12,27 @@ interface JobsTableProps {
 
 const JobsTable: React.FC<JobsTableProps> = ({ jobs, loading, onRetry, startIndex }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+
+  const downloadFile = (url:string, filename:any) => {
+    fetch(url, {
+      method: "GET",
+      headers: {}
+    })
+        .then(response => response.arrayBuffer())
+        .then(buffer => {
+          const blob = new Blob([buffer]);
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          link.setAttribute("download", filename); // Dynamic filename
+          document.body.appendChild(link);
+          link.click();
+          link.remove(); // Clean up
+        })
+        .catch(err => {
+          console.error("Download error:", err);
+        });
+  };
 
   const formatSize = (bytes?: number) => {
     if (bytes === undefined || bytes === null) return '-';
@@ -127,15 +148,19 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, loading, onRetry, startInde
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm" onClick={(e) => e.stopPropagation()}>
                   {job.compressed_file_name != null && job.status === 'completed' ? (
-                    <a
-                      href={"http://localhost:8080/images-compressed/" + job.compressed_file_name}
-                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink size={14} />
-                      View
-                    </a>
+                      <button
+                          onClick={() =>
+                              downloadFile(
+                                  `http://localhost:8080/images-compressed/${job.compressed_file_name}`,
+                                  job.compressed_file_name
+                              )
+                          }
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                      >
+                        <Download size={14} />
+                        Download
+                      </button>
+
                   ) : job.status === 'failed' ? (
                     <button 
                       className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
