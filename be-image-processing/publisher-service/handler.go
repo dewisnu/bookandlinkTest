@@ -211,7 +211,6 @@ func retryJob(db *sql.DB, rabbitmq *RabbitMQ) gin.HandlerFunc {
 			return
 		}
 
-		// Update job status to pending
 		err = updateJobStatus(db, id, "pending")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error updating job status: %v", err)})

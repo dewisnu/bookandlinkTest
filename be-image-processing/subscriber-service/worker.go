@@ -22,6 +22,8 @@ func processJob(db *sql.DB, msg amqp.Delivery) {
 		return
 	}
 
+	updateJobStatus(db, jobMsg.ID, "processing", "", nil, nil)
+
 	query := `SELECT filename FROM image_jobs WHERE id = $1`
 	var filename string
 	err := db.QueryRow(query, jobMsg.ID).Scan(&filename)
