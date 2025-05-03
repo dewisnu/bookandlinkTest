@@ -20,8 +20,8 @@ export const mockJobs: Job[] = [
     filename: 'beach_sunrise.jpg',
     original_size: getRandomFileSize(2000, 5000),
     compressed_size: getRandomFileSize(500, 1500),
-    compressed_url: '/images/beach_sunrise_compressed.jpg',
-    status: 'complete',
+    compressed_file_name: '/images/beach_sunrise_compressed.jpg',
+    status: 'completed',
     created_at: getRandomPastTime(),
     updated_at: getRandomPastTime()
   },
@@ -30,8 +30,8 @@ export const mockJobs: Job[] = [
     filename: 'mountain_view.png',
     original_size: getRandomFileSize(3000, 8000),
     compressed_size: getRandomFileSize(1000, 2000),
-    compressed_url: '/images/mountain_view_compressed.png',
-    status: 'complete',
+    compressed_file_name: '/images/mountain_view_compressed.png',
+    status: 'completed',
     created_at: getRandomPastTime(),
     updated_at: getRandomPastTime()
   },
@@ -65,8 +65,8 @@ export const mockJobs: Job[] = [
     filename: 'sunset_beach.jpg',
     original_size: getRandomFileSize(3000, 5000),
     compressed_size: getRandomFileSize(500, 1500),
-    compressed_url: '/images/sunset_beach_compressed.jpg',
-    status: 'complete',
+    compressed_file_name: '/images/sunset_beach_compressed.jpg',
+    status: 'completed',
     created_at: getRandomPastTime(),
     updated_at: getRandomPastTime()
   },
@@ -83,8 +83,8 @@ export const mockJobs: Job[] = [
     filename: 'restaurant_menu.jpg',
     original_size: getRandomFileSize(1000, 2000),
     compressed_size: getRandomFileSize(300, 800),
-    compressed_url: '/images/restaurant_menu_compressed.jpg',
-    status: 'complete',
+    compressed_file_name: '/images/restaurant_menu_compressed.jpg',
+    status: 'completed',
     created_at: getRandomPastTime(),
     updated_at: getRandomPastTime()
   },
@@ -102,8 +102,8 @@ export const mockJobs: Job[] = [
     filename: 'hotel_room.jpg',
     original_size: getRandomFileSize(5000, 8000),
     compressed_size: getRandomFileSize(1000, 3000),
-    compressed_url: '/images/hotel_room_compressed.jpg',
-    status: 'complete',
+    compressed_file_name: '/images/hotel_room_compressed.jpg',
+    status: 'completed',
     created_at: getRandomPastTime(),
     updated_at: getRandomPastTime()
   }
