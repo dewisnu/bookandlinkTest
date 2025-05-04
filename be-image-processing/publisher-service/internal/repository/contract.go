@@ -26,6 +26,10 @@ type NewRepositoryParams struct {
 }
 
 func NewRepository(params *NewRepositoryParams) Repository {
+	if params.Database == nil {
+		panic("NewRepository: Database is nil")
+	}
+
 	return &repository{
 		conf: &repositoryConfig{},
 		db:   params.Database,

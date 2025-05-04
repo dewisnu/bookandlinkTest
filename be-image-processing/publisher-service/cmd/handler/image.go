@@ -33,6 +33,7 @@ func HandleImageUpload(handler ImageUploadHandler) gin.HandlerFunc {
 		resp, err := handler(g, files)
 		if err != nil {
 			ginhttputil.WriteErrorResponse(g, http.StatusInternalServerError, err)
+			return
 		}
 
 		if len(resp.JobIDs) == 0 {
@@ -58,6 +59,7 @@ func HandleServeImageUploaded(handler ServeImageUploadedHandler) gin.HandlerFunc
 
 		if err != nil {
 			ginhttputil.WriteErrorResponse(g, http.StatusInternalServerError, err)
+			return
 		}
 
 		if isExist {
@@ -83,6 +85,7 @@ func HandleServeImageCompressed(handler ServeImageCompressedHandler) gin.Handler
 
 		if err != nil {
 			ginhttputil.WriteErrorResponse(g, http.StatusInternalServerError, err)
+			return
 		}
 
 		if isExist {
@@ -111,6 +114,7 @@ func HandleCompressedUpload(handler CompressedUploadHandler) gin.HandlerFunc {
 		resp, err := handler(g, file)
 		if err != nil {
 			ginhttputil.WriteErrorResponse(g, http.StatusInternalServerError, err)
+			return
 		}
 
 		ginhttputil.WriteSuccessResponse(g, resp, "success uploaded compressed images")

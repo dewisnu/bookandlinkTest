@@ -17,7 +17,7 @@ const logTagStartWebservice = "[Start]"
 func Start(conf *config.Config) {
 	opts := &slog.HandlerOptions{
 		Level:     slog.LevelDebug, // Debug, Info, Warn, Error
-		AddSource: false,           // Show file & line number
+		AddSource: true,            // Show file & line number
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 	slog.SetDefault(logger) // Set global logger

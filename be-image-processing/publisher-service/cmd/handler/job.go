@@ -20,6 +20,7 @@ func HandleGetJobs(handler GetJobsHandler) gin.HandlerFunc {
 
 		if err != nil {
 			ginhttputil.WriteErrorResponse(g, http.StatusInternalServerError, err)
+
 		}
 
 		ginhttputil.WriteSuccessResponse(g, resp, "success get jobs")
@@ -41,10 +42,12 @@ func HandleGetJob(handler GetJobHandler) gin.HandlerFunc {
 
 		if resp == (dto.ImageJob{}) {
 			ginhttputil.WriteErrorResponse(g, http.StatusNotFound, errors.New("job not found"))
+			return
 		}
 
 		if err != nil {
 			ginhttputil.WriteErrorResponse(g, http.StatusInternalServerError, err)
+			return
 		}
 
 		ginhttputil.WriteSuccessResponse(g, resp, "success get job")
@@ -65,10 +68,12 @@ func HandleGetJobByStatus(handler GetJobByStatusHandler) gin.HandlerFunc {
 
 		if len(resp) == 0 {
 			ginhttputil.WriteErrorResponse(g, http.StatusNotFound, errors.New("job not found"))
+			return
 		}
 
 		if err != nil {
 			ginhttputil.WriteErrorResponse(g, http.StatusInternalServerError, err)
+			return
 		}
 
 		ginhttputil.WriteSuccessResponse(g, resp, "success get jobs by status")
@@ -90,6 +95,7 @@ func HandleRetryJobs(handler GetJobRetryHandler) gin.HandlerFunc {
 
 		if err != nil {
 			ginhttputil.WriteErrorResponse(g, http.StatusInternalServerError, err)
+			return
 		}
 
 		ginhttputil.WriteSuccessResponse(g, nil, "Job queued for retry")

@@ -8,13 +8,13 @@ import (
 )
 
 func (s *service) GetJobs() (imageJobsResponse []dto.ImageJob, err error) {
-	imageJobsResponse, err = s.repository.GetImageJobs()
+	jobs, err := s.repository.GetImageJobs()
 	if err != nil {
 		slog.Error(fmt.Sprintf("Error fetching jobs: %v", err))
 		return nil, err
 	}
 
-	return
+	return jobs, nil
 }
 
 func (s *service) GetJob(id int64) (imageJobResponse dto.ImageJob, err error) {

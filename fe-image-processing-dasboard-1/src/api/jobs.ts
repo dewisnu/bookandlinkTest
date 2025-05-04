@@ -30,8 +30,12 @@ export const fetchJobs = async (): Promise<Job[]> => {
 export const fetchJobsByStatus = async (status: string): Promise<Job[]> => {
   try {
     const response = await api.get(`/jobs/status/${status}`);
-    return response.data;
-  } catch (error) {
+    return response.data.data;
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      console.warn(`No jobs found for status: ${status}`);
+      return [];
+    }
     console.error('Error fetching jobs by status:', error);
     throw error;
   }
