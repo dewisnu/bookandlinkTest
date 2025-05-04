@@ -17,7 +17,7 @@ const api = axios.create({
 export const fetchJobs = async (): Promise<Job[]> => {
   try {
     const response = await api.get('/jobs');
-    return response.data;
+    return response.data.data;
   } catch (error) {
     console.error('Error fetching jobs:', error);
     throw error;

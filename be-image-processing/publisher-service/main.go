@@ -14,7 +14,6 @@ func main() {
 	config.Init()
 	conf := config.Get()
 	webservice.Start(conf)
-
 	confBytes, _ := json.Marshal(conf)
 	slog.Info(fmt.Sprintf("%s starting service with the config of: %s", logTagMain, confBytes))
 }
