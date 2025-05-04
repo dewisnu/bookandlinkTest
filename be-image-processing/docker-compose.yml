@@ -49,7 +49,12 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=password
       - DB_NAME=image_processor
+      - GIN_MODE=debug
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - CORS_ALLOW_ORIGINS=*
+      - SERVICE_PORT=:8080
+      - SERVICE_NAME=publisher-service
+      - ENVIRONMENT=dev
     volumes:
       - ./uploads:/app/uploads
       - ./compressed:/app/compressed
