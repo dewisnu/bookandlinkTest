@@ -10,6 +10,7 @@ import { fetchJobs, fetchJobsByStatus, retryJob } from './api/jobs';
 function App() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filtering, setFiltering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -22,17 +23,28 @@ function App() {
   useEffect(() => {
     const loadJobs = async (isBackground = false) => {
       try {
-        if (!isBackground) setLoading(true);
+        if (!isBackground) {
+          if (statusFilter) {
+            setFiltering(true);
+          } else {
+            setLoading(true);
+          }
+        }
+
         const data = statusFilter
             ? await fetchJobsByStatus(statusFilter)
             : await fetchJobs();
+
         setJobs(data || []);
         setError(null);
       } catch (err) {
         setError('Failed to load jobs. Please try again.');
         console.error('Error loading jobs:', err);
       } finally {
-        if (!isBackground) setLoading(false);
+        if (!isBackground) {
+          setLoading(false);
+          setFiltering(false);
+        }
       }
     };
 
@@ -131,12 +143,19 @@ function App() {
             {loading ? (
                 <div className="text-sm text-gray-500 py-6 text-center">Loading jobs...</div>
             ) : (
-                <JobsTable
-                    jobs={currentJobs}
-                    loading={refreshing}
-                    startIndex={indexOfFirstItem}
-                    onRetry={retryJob}
-                />
+                <>
+                  {filtering && (
+                      <div className="text-sm text-blue-500 py-2 text-center animate-pulse">
+                        Filtering...
+                      </div>
+                  )}
+                  <JobsTable
+                      jobs={currentJobs}
+                      loading={refreshing}
+                      startIndex={indexOfFirstItem}
+                      onRetry={retryJob}
+                  />
+                </>
             )}
 
             <Pagination
@@ -152,5 +171,6 @@ function App() {
 }
 
 export default App;
+
 
 

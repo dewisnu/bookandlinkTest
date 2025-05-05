@@ -20,7 +20,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess }) => {
       const imageFiles = filesArray.filter(file => file.type.startsWith('image/'));
       
       if (imageFiles.length === 0) {
-        setError('Please select image files only (jpg, png, gif, webp)');
+        setError('Please select image files only (jpg, png)');
         return;
       }
       

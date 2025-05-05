@@ -3,8 +3,9 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // RabbitMQ represents a connection to RabbitMQ
@@ -34,79 +35,93 @@ func InitRabbitMQ(param *InitRabbitMQParams) (*RabbitMQ, error) {
 		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
 	}
 
-	// Create a channel
 	channel, err := conn.Channel()
 	if err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("failed to open a channel: %w", err)
 	}
 
-	// Declare a queue
-	queue, err := channel.QueueDeclare(
-		"image_jobs", // name
-		true,         // durable
-		false,        // delete when unused
-		false,        // exclusive
-		false,        // no-wait
-		nil,          // arguments
-	)
+	// Setup exchanges and queues
+	err = setupExchangesAndQueues(channel)
 	if err != nil {
 		channel.Close()
 		conn.Close()
-		return nil, fmt.Errorf("failed to declare a queue: %w", err)
+		return nil, fmt.Errorf("failed to setup exchanges and queues: %w", err)
 	}
 
-	// Create dead letter exchange and queue for failed jobs
-	err = setupDeadLetterQueue(channel)
+	// Inspect the already-declared queue (avoid re-declaration with wrong args)
+	queue, err := channel.QueueInspect("image_jobs")
 	if err != nil {
 		channel.Close()
 		conn.Close()
-		return nil, fmt.Errorf("failed to setup dead letter queue: %w", err)
+		return nil, fmt.Errorf("failed to inspect main queue: %w", err)
 	}
 
-	log.Println("Successfully connected to RabbitMQ")
+	log.Println("✅ Successfully connected to RabbitMQ with retry & DLQ setup")
 	return &RabbitMQ{conn: conn, channel: channel, queue: queue}, nil
 }
 
-// setupDeadLetterQueue sets up a dead letter exchange and queue for failed jobs
-func setupDeadLetterQueue(ch *amqp.Channel) error {
-	// Declare dead letter exchange
-	err := ch.ExchangeDeclare(
-		"dead_letter_exchange", // name
-		"direct",               // type
-		true,                   // durable
-		false,                  // auto-deleted
-		false,                  // internal
-		false,                  // no-wait
-		nil,                    // arguments
-	)
-	if err != nil {
-		return fmt.Errorf("failed to declare dead letter exchange: %w", err)
+func setupExchangesAndQueues(ch *amqp.Channel) error {
+	// Dead Letter Exchange
+	if err := ch.ExchangeDeclare("dead_letter_exchange", "direct", true, false, false, false, nil); err != nil {
+		return fmt.Errorf("declare DLX: %w", err)
 	}
 
-	// Declare dead letter queue
-	dlq, err := ch.QueueDeclare(
-		"failed_jobs", // name
-		true,          // durable
-		false,         // delete when unused
-		false,         // exclusive
-		false,         // no-wait
-		nil,           // arguments
-	)
-	if err != nil {
-		return fmt.Errorf("failed to declare dead letter queue: %w", err)
+	// Retry Exchange
+	if err := ch.ExchangeDeclare("retry_exchange", "direct", true, false, false, false, nil); err != nil {
+		return fmt.Errorf("declare retry exchange: %w", err)
 	}
 
-	// Bind the dead letter queue to the exchange
-	err = ch.QueueBind(
-		dlq.Name,               // queue name
-		"failed_jobs",          // routing key
-		"dead_letter_exchange", // exchange
+	// Retry Queue
+	_, err := ch.QueueDeclare(
+		"retry_queue",
+		true,
+		false,
+		false,
+		false,
+		amqp.Table{
+			"x-message-ttl":             int32(5000),  // 5s
+			"x-dead-letter-exchange":    "",           // default exchange
+			"x-dead-letter-routing-key": "image_jobs", // back to main
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("declare retry_queue: %w", err)
+	}
+	if err := ch.QueueBind("retry_queue", "retry", "retry_exchange", false, nil); err != nil {
+		return fmt.Errorf("bind retry_queue: %w", err)
+	}
+
+	// Failed Jobs Queue
+	_, err = ch.QueueDeclare(
+		"failed_jobs",
+		true,
+		false,
+		false,
 		false,
 		nil,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to bind dead letter queue to exchange: %w", err)
+		return fmt.Errorf("declare failed_jobs queue: %w", err)
+	}
+	if err := ch.QueueBind("failed_jobs", "failed_jobs", "dead_letter_exchange", false, nil); err != nil {
+		return fmt.Errorf("bind failed_jobs queue: %w", err)
+	}
+
+	// Main Image Jobs Queue
+	_, err = ch.QueueDeclare(
+		"image_jobs",
+		true,
+		false,
+		false,
+		false,
+		amqp.Table{
+			"x-dead-letter-exchange":    "retry_exchange",
+			"x-dead-letter-routing-key": "retry",
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("declare image_jobs queue: %w", err)
 	}
 
 	return nil
@@ -124,33 +139,28 @@ func (r *RabbitMQ) Close() {
 
 // PublishJob sends a job message to the queue
 func (r *RabbitMQ) PublishJob(jobID int64, filename string) error {
-	// Create message
-	message := JobMessage{
-		ID:       jobID,
-		Filename: filename,
-	}
+	message := JobMessage{ID: jobID, Filename: filename}
 
-	// Marshal to JSON
 	body, err := json.Marshal(message)
 	if err != nil {
-		return fmt.Errorf("error marshalling job message: %w", err)
+		return fmt.Errorf("marshal job: %w", err)
 	}
 
-	// Publish message
 	err = r.channel.Publish(
-		"",           // exchange
-		r.queue.Name, // routing key
-		false,        // mandatory
-		false,        // immediate
+		"",           // default exchange
+		r.queue.Name, // routing key (image_jobs)
+		false,
+		false,
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "application/json",
 			Body:         body,
-		})
+		},
+	)
 	if err != nil {
-		return fmt.Errorf("error publishing job message: %w", err)
+		return fmt.Errorf("publish job: %w", err)
 	}
 
-	log.Printf("Published job %d to queue", jobID)
+	log.Printf("📤 Published job ID %d to queue '%s'", jobID, r.queue.Name)
 	return nil
 }

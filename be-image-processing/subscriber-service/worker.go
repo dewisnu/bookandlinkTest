@@ -22,6 +22,15 @@ func processJob(db *sql.DB, msg amqp.Delivery) {
 		return
 	}
 
+	// Cek retry count
+	retryCount := getRetryCount(msg.Headers)
+	if retryCount >= 3 {
+		log.Printf("Job ID %d reached max retries. Sending to DLQ.", jobMsg.ID)
+		updateJobStatus(db, jobMsg.ID, "failed", "max retry reached", nil, nil)
+		msg.Reject(false) // go to DLQ
+		return
+	}
+
 	updateJobStatus(db, jobMsg.ID, "processing", "", nil, nil)
 
 	query := `SELECT filename FROM image_jobs WHERE id = $1`
@@ -65,7 +74,6 @@ func processJob(db *sql.DB, msg amqp.Delivery) {
 		return
 	}
 
-	// Send compressed image back to provider
 	fileData, err := os.Open(outputPath)
 	if err != nil {
 		log.Printf("Failed to open compressed file: %v", err)
@@ -92,8 +100,8 @@ func processJob(db *sql.DB, msg amqp.Delivery) {
 		return
 	}
 
-	compressed_file_name := "compressed_" + filename
-	updateJobStatus(db, jobMsg.ID, "completed", "", &compressedSize, &compressed_file_name)
+	compressedFileName := "compressed_" + filename
+	updateJobStatus(db, jobMsg.ID, "completed", "", &compressedSize, &compressedFileName)
 
 	log.Printf("Successfully processed job %d", jobMsg.ID)
 	msg.Ack(false)
@@ -109,4 +117,28 @@ func updateJobStatus(db *sql.DB, id int, status, errorMsg string, compressedSize
 	if err != nil {
 		log.Printf("Failed to update job status: %v", err)
 	}
+}
+
+func getRetryCount(headers amqp.Table) int {
+	xDeathRaw, ok := headers["x-death"]
+	if !ok {
+		return 0
+	}
+
+	xDeathList, ok := xDeathRaw.([]interface{})
+	if !ok || len(xDeathList) == 0 {
+		return 0
+	}
+
+	xDeath, ok := xDeathList[0].(amqp.Table)
+	if !ok {
+		return 0
+	}
+
+	count, ok := xDeath["count"].(int64)
+	if !ok {
+		return 0
+	}
+
+	return int(count)
 }

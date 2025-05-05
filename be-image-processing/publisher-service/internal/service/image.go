@@ -56,6 +56,12 @@ func (s *service) HandleUpload(g *gin.Context, files []*multipart.FileHeader) (i
 			continue
 		}
 
+		err = s.repository.UpdateJobStatus(jobID, "processing")
+		if err != nil {
+			slog.Error(fmt.Sprintf("Error updating job status: %v", err))
+			continue
+		}
+
 		jobIDs = append(jobIDs, jobID)
 		slog.Info(fmt.Sprintf("Successfully processed upload: %s, size: %d bytes, job ID: %d", filename, originalSize, jobID))
 	}

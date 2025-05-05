@@ -1,13 +1,13 @@
 package main
 
 import (
+	"log"
+
 	_ "github.com/lib/pq"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"log"
 )
 
 func main() {
-	// Initialize database connection
 	db, err := initDB()
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
@@ -27,21 +27,15 @@ func main() {
 	}
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare(
-		"image_jobs", // queue name
-		true,         // durable
-		false,        // delete when unused
-		false,        // exclusive
-		false,        // no-wait
-		nil,          // arguments
-	)
+	// 👇 Ganti QueueDeclare dengan QueueInspect (queue sudah dibuat oleh publisher)
+	q, err := ch.QueueInspect("image_jobs")
 	if err != nil {
-		log.Fatalf("Failed to declare a queue: %v", err)
+		log.Fatalf("Failed to inspect the queue: %v", err)
 	}
 
 	msgs, err := ch.Consume(
 		q.Name, // queue
-		"",     // consumer
+		"",     // consumer tag
 		false,  // auto-ack
 		false,  // exclusive
 		false,  // no-local
@@ -52,13 +46,13 @@ func main() {
 		log.Fatalf("Failed to register a consumer: %v", err)
 	}
 
-	log.Println("Waiting for messages. To exit press CTRL+C")
+	log.Println("📥 Waiting for messages. To exit press CTRL+C")
 
 	forever := make(chan bool)
 
 	go func() {
 		for d := range msgs {
-			processJob(db, d)
+			processJob(db, d) // Handle job
 		}
 	}()
 
