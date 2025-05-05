@@ -27,7 +27,7 @@ func processJob(db *sql.DB, msg amqp.Delivery) {
 	if retryCount >= 3 {
 		log.Printf("Job ID %d reached max retries. Sending to DLQ.", jobMsg.ID)
 		updateJobStatus(db, jobMsg.ID, "failed", "max retry reached", nil, nil)
-		msg.Nack(false, false) // go to DLQ
+		msg.Ack(false) // go to DLQ
 		return
 	}
 
